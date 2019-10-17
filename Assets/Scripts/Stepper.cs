@@ -48,6 +48,10 @@ public class Stepper : MonoBehaviour
              Debug.DrawRay(target.position, Vector3.down * hit.distance, Color.red);
             endPos = hit.point;
         }
+        // Get middle position between initial and end positions
+        Vector3 midPos = (startPos + endPos) / 2.0f;
+        // Lift mid pos
+        midPos += target.up * Vector3.Distance(startPos, endPos) / 2.0f ;
 
         // Distance from start position to end position
         float journeyLength = Vector3.Distance(startPos, endPos);
@@ -63,7 +67,7 @@ public class Stepper : MonoBehaviour
             distanceCovered = timeElapsed * 1.0f;
             float fractionOfJourney = distanceCovered / journeyLength;
             // Interpolate position and rotation
-            transform.position = Vector3.Lerp(startPos, endPos, fractionOfJourney);
+            transform.position = Vector3.Lerp(Vector3.Lerp(startPos, midPos, fractionOfJourney), Vector3.Lerp(midPos, endPos, fractionOfJourney), fractionOfJourney);
             transform.rotation = Quaternion.Slerp(startRot, endRot, fractionOfJourney);
             print(fractionOfJourney);
             // Wait one frame
