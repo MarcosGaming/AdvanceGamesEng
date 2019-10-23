@@ -5,8 +5,7 @@ using UnityEngine;
 public class ProceduralAnimationsController : MonoBehaviour
 {
     [SerializeField] Transform target;          // Target that the character is going to follow
-    [SerializeField] Stepper rightLegStepper;   // Right leg
-    [SerializeField] Stepper leftLegStepper;    // Left leg
+    [SerializeField] Stepper[] steppers;   // Legs
     [SerializeField] float turnSpeed;           // Turn speed
     public float moveSpeed;                     // Movement speed
     [SerializeField] float turnAcceleration;    // Turn acceleration
@@ -31,12 +30,12 @@ public class ProceduralAnimationsController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        RootMotionUpdate();
     }
 
     private void LateUpdate()
     {
-        RootMotionUpdate();
+       
     }
 
     // Coroutine for the leg movement
@@ -45,22 +44,15 @@ public class ProceduralAnimationsController : MonoBehaviour
         // Run forever
         while (true)
         {
-            // Move right leg first
-            do
+            for(int i = 0; i < steppers.Length; i++)
             {
-                rightLegStepper.TryMove();
-                // Wait a frame 
-                yield return null;
-                // Stay in this loop while any of the legs try to move
-            } while (rightLegStepper.Moving);
-            yield return null;
-            // Move left leg second
-            do
-            {
-                leftLegStepper.TryMove();
-                // Wait a frame
-                yield return null;
-            } while (leftLegStepper.Moving);
+                do
+                {
+                    steppers[i].TryMove();
+                    yield return null;
+                } while (steppers[i].Moving);
+                yield return new WaitForSeconds(5);
+            }
         }
     }
 
