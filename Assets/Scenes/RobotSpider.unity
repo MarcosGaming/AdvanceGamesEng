@@ -1113,9 +1113,9 @@ MonoBehaviour:
   - {fileID: 462749890}
   - {fileID: 1980747388}
   - {fileID: 1566669198}
-  turnSpeed: 7
+  turnSpeed: 15
   moveSpeed: 1.5
-  turnAcceleration: 0.5
+  turnAcceleration: 3
   moveAcceleration: 0.2
   minDistToTarget: 2
   maxDistToTarget: 5

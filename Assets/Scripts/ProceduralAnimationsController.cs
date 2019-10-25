@@ -5,7 +5,7 @@ using UnityEngine;
 public class ProceduralAnimationsController : MonoBehaviour
 {
     [SerializeField] Transform target;          // Target that the character is going to follow
-    [SerializeField] Stepper[] steppers;   // Legs
+    [SerializeField] Stepper[] steppers;        // Legs
     [SerializeField] float turnSpeed;           // Turn speed
     public float moveSpeed;                     // Movement speed
     [SerializeField] float turnAcceleration;    // Turn acceleration
