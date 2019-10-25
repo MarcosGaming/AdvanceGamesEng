@@ -13,8 +13,16 @@ public class ProceduralAnimationsController : MonoBehaviour
     [SerializeField] float minDistToTarget;     // Min range to target
     [SerializeField] float maxDistToTarget;     // Max range to target
     [SerializeField] float maxAngToTarget;      // Max angle to target
+    [SerializeField] Orientation orientation;   // Right or Forward
     Vector3 currentVelocity;                    // Current velocity
     float currentAngularVelocity;               // Current angular velocity
+    Vector3 fromVector;                         // The vector from which the angular difference is measured
+
+    enum Orientation
+    {
+        Right,
+        Forward
+    };
 
     private void Awake()
     {
@@ -24,7 +32,7 @@ public class ProceduralAnimationsController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        
+
     }
 
     // Update is called once per frame
@@ -64,8 +72,16 @@ public class ProceduralAnimationsController : MonoBehaviour
         // Vector toward target on the XZ plane
         Vector3 targetDirProjected = Vector3.ProjectOnPlane(targetDir, transform.up);
         // Angle from gecko forward direction toward our target
-        float angToTarget = Vector3.SignedAngle(transform.forward, targetDirProjected, transform.up);
-
+        if (orientation.Equals(Orientation.Forward))
+        {
+            fromVector = transform.forward;
+        }
+        else
+        {
+            fromVector = transform.right;
+        }
+        float angToTarget = Vector3.SignedAngle(fromVector, targetDirProjected, transform.up);
+        print(angToTarget);
         float targetAngularVelocity = 0.0f;
 
         // If within max angle leave angular velocity to zero
