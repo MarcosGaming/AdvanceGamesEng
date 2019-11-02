@@ -4,19 +4,21 @@ using UnityEngine;
 
 public class ProceduralAnimationsController : MonoBehaviour
 {
-    [SerializeField] Transform target;          // Target that the character is going to follow
-    [SerializeField] Stepper[] steppers;        // Legs
-    [SerializeField] float turnSpeed;           // Turn speed
-    public float moveSpeed;                     // Movement speed
-    [SerializeField] float turnAcceleration;    // Turn acceleration
-    [SerializeField] float moveAcceleration;    // Movement acceleration
-    [SerializeField] float minDistToTarget;     // Min range to target
-    [SerializeField] float maxDistToTarget;     // Max range to target
-    [SerializeField] float maxAngToTarget;      // Max angle to target
-    [SerializeField] Orientation orientation;   // Right or Forward
-    Vector3 currentVelocity;                    // Current velocity
-    float currentAngularVelocity;               // Current angular velocity
-    Vector3 fromVector;                         // The vector from which the angular difference is measured
+    [SerializeField] Transform target;              // Target that the character is going to follow
+    [SerializeField] Stepper[] steppers;            // Legs
+    [SerializeField] CentralStabilizer centralBody; // Component that manages changes in the central body
+    [SerializeField] float turnSpeed;               // Turn speed
+    public float moveSpeed;                         // Movement speed
+    public bool movingForward;                      // Whether the character is moving forwards or backwards
+    [SerializeField] float turnAcceleration;        // Turn acceleration
+    [SerializeField] float moveAcceleration;        // Movement acceleration
+    [SerializeField] float minDistToTarget;         // Min range to target
+    [SerializeField] float maxDistToTarget;         // Max range to target
+    [SerializeField] float maxAngToTarget;          // Max angle to target
+    [SerializeField] Orientation orientation;       // Right or Forward
+    Vector3 currentVelocity;                        // Current velocity
+    float currentAngularVelocity;                   // Current angular velocity
+    Vector3 fromVector;                             // The vector from which the angular difference is measured
 
     enum Orientation
     {
@@ -59,7 +61,6 @@ public class ProceduralAnimationsController : MonoBehaviour
                     steppers[i].TryMove();
                     yield return null;
                 } while (steppers[i].Moving);
-                yield return new WaitForSeconds(5);
             }
         }
     }
@@ -71,7 +72,7 @@ public class ProceduralAnimationsController : MonoBehaviour
         Vector3 targetDir = target.position - transform.position;
         // Vector toward target on the XZ plane
         Vector3 targetDirProjected = Vector3.ProjectOnPlane(targetDir, transform.up);
-        // Angle from gecko forward direction toward our target
+        // Angle from forward direction toward our target
         if (orientation.Equals(Orientation.Forward))
         {
             fromVector = transform.forward;
@@ -81,7 +82,6 @@ public class ProceduralAnimationsController : MonoBehaviour
             fromVector = transform.right;
         }
         float angToTarget = Vector3.SignedAngle(fromVector, targetDirProjected, transform.up);
-        print(angToTarget);
         float targetAngularVelocity = 0.0f;
 
         // If within max angle leave angular velocity to zero
@@ -104,19 +104,21 @@ public class ProceduralAnimationsController : MonoBehaviour
         transform.Rotate(0, Time.deltaTime * currentAngularVelocity, 0, Space.World);
 
         Vector3 targetVelocity = Vector3.zero;
-        // Dont move if gecko is not facing the target
+        // Dont move if not facing the target
         if (Mathf.Abs(angToTarget) < 90)
         {
             float distToTarget = Vector3.Distance(transform.position, target.position);
+            movingForward = true;
 
-            // If gecko is too far away, approach the target
+            // If too far away, approach the target
             if (distToTarget > maxDistToTarget)
             {
                 targetVelocity = moveSpeed * targetDirProjected.normalized;
             }
-            // If gecko is too close reverse direction and move away
+            // If too close reverse direction and move away
             else if (distToTarget < minDistToTarget)
             {
+                movingForward = false;
                 targetVelocity = moveSpeed * -targetDirProjected.normalized;
             }
         }

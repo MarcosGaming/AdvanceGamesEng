@@ -7,9 +7,14 @@ public class Stepper : MonoBehaviour
 
     [SerializeField] Transform target;                          // Transform that is going to raytrace downwoards to the position the foot need to be at
     [SerializeField] ProceduralAnimationsController mainBody;   // Get the velocity of the main body from here
-    [SerializeField] float stepAtDistance;                      // Distance after which the leg is going to move
-    [SerializeField] float stepTime;                            // Time that will take the leg to reach its position
+    [SerializeField] float forwardStepAtDistance;               // Distance after which the leg is going to move going forwards
+    [SerializeField] float forwardOverShootFraction;            // Fraction to overstep by so the legs do not get dragged behind the body
+    [SerializeField] float forwardMultiplier;                   // Multiplier to speed up the leg movement going forwards
+    [SerializeField] float backwardStepAtDistance;             // Distance after which the leg is going to move when going backwards
+    [SerializeField] float backwardOverShootFraction;           // Fraction to overstep by so the legs do not get dragged behind the body when going backwards
+    [SerializeField] float backwardMultiplier;                  // Multiplier to speed up the leg movement going backwards
     public bool Moving;                                         // Checks if the leg is already moving
+    private bool isGrounded;                                    // Boolean to check if the feet is in the air or not 
 
 
     // Start is called before the first frame update
@@ -26,11 +31,10 @@ public class Stepper : MonoBehaviour
         {
             Debug.DrawRay(target.position, Vector3.down * hit.distance, Color.red);
         }
-    }
-
-    private void LateUpdate()
-    {
-        TryMove();
+        if (Physics.Raycast(transform.position, Vector3.up, out hit, 2.0f))
+        {
+            Debug.DrawRay(transform.position, Vector3.up * 50.0f, Color.blue);
+        }
     }
 
     // This function is called in the movement controller
@@ -39,15 +43,38 @@ public class Stepper : MonoBehaviour
         // If already moving not start another move
         if (Moving) return;
 
-        // Start courotine when distance to target is greater or equal than the step distance
-        if (Vector3.Distance(transform.position, target.position) >= stepAtDistance)
+        // Start courotine when distance to target is greater or equal than the step distance or if the feet is in the air or if it is inside another object
+        RaycastHit hitDown;
+        Physics.Raycast(target.position, Vector3.down, out hitDown, 50.0f);
+        RaycastHit hitUp;
+        if(!mainBody.movingForward && (Vector3.Distance(transform.position, hitDown.point) >= backwardStepAtDistance || !isGrounded))
         {
-            StartCoroutine(MoveLeg());
+            StartCoroutine(MoveLeg(backwardStepAtDistance, backwardOverShootFraction, backwardMultiplier));
+        }
+        else if (Vector3.Distance(transform.position, hitDown.point) >= forwardStepAtDistance || !isGrounded || Physics.Raycast(transform.position, Vector3.up, out hitUp, 1.0f))
+        {
+            StartCoroutine(MoveLeg(forwardStepAtDistance, forwardOverShootFraction, forwardMultiplier));
+        }
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.layer == 8 && !isGrounded)
+        {
+            isGrounded = true;
+        }
+    }
+
+    private void OnCollisionExit(Collision collision)
+    {
+        if(collision.gameObject.layer == 8 && isGrounded )
+        {
+            isGrounded = false;
         }
     }
 
     // Coroutine that is going to take care of the leg movement
-    IEnumerator MoveLeg()
+    IEnumerator MoveLeg(float stepDistance, float overShootFraction, float multiplier)
     {
         Moving = true;
         // Starting position and rotation
@@ -63,6 +90,13 @@ public class Stepper : MonoBehaviour
              Debug.DrawRay(target.position, Vector3.down * hit.distance, Color.red);
             endPos = hit.point;
         }
+        // Total distance to overshoot by
+        float overshootDistance = stepDistance * overShootFraction;
+        Vector3 overshootVector = (endPos - transform.position) * overshootDistance;
+        // Restrict the overshoot vector to the xz plane
+        overshootVector = Vector3.ProjectOnPlane(overshootVector, Vector3.up);
+        // Final end position
+        endPos += overshootVector;
         // Get middle position between initial and end positions
         Vector3 midPos = (startPos + endPos) / 2.0f;
         // Lift mid pos
@@ -81,7 +115,7 @@ public class Stepper : MonoBehaviour
         {
             timeElapsed += Time.deltaTime;
             // Calculate what distance still needs to be covered
-            distanceCovered = timeElapsed * (mainBody.moveSpeed) * stepAtDistance;
+            distanceCovered = timeElapsed * (mainBody.moveSpeed) * stepDistance * multiplier;
             float fractionOfJourney = distanceCovered / journeyLength;
             fractionOfJourney = Easing.Cubic.InOut(fractionOfJourney);
             float fractionOfJouneyPart1 = distanceCovered / journeyLengthPart1;
