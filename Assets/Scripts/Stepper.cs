@@ -31,7 +31,7 @@ public class Stepper : MonoBehaviour
         {
             Debug.DrawRay(target.position, Vector3.down * hit.distance, Color.red);
         }
-        if (Physics.Raycast(transform.position, Vector3.up, out hit, 2.0f))
+        if (Physics.Raycast(transform.position, Vector3.up, out hit, 10.0f))
         {
             Debug.DrawRay(transform.position, Vector3.up * 50.0f, Color.blue);
         }
@@ -51,7 +51,7 @@ public class Stepper : MonoBehaviour
         {
             StartCoroutine(MoveLeg(backwardStepAtDistance, backwardOverShootFraction, backwardMultiplier));
         }
-        else if (Vector3.Distance(transform.position, hitDown.point) >= forwardStepAtDistance || !isGrounded || Physics.Raycast(transform.position, Vector3.up, out hitUp, 1.0f))
+        else if (Vector3.Distance(transform.position, hitDown.point) >= forwardStepAtDistance || !isGrounded || Physics.Raycast(transform.position, Vector3.up, out hitUp, 2.0f))
         {
             StartCoroutine(MoveLeg(forwardStepAtDistance, forwardOverShootFraction, forwardMultiplier));
         }
