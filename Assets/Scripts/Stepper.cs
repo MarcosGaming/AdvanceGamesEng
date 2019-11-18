@@ -37,7 +37,7 @@ public class Stepper : MonoBehaviour
         }
     }
 
-    // This function is called in the movement controller
+    // This function is called in the procedural animations controller
     public void TryMove()
     {
         // If already moving not start another move
