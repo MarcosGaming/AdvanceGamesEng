@@ -15,33 +15,40 @@ public class LaserAttack : MonoBehaviour
     [SerializeField] GameObject laserPrefab;        // Laser game object
     [SerializeField] GameObject firePoint;          // Gameobject from where the laser is going to be shot
     [SerializeField] float fireInTime;              // For how long the laser is going to be shot
-    [SerializeField] float fireEverySeconds;        // Seconds after which the laser might be fired
 
     private GameObject spawnedLaser;                // Instance of the laser prefab
-    private float countdown;                        // Countdown until the laser is fired
     private bool isAttacking;                       // Whether the laser is being shot or not
+
+    private bool keepShooting;                      // Whether the laser should stop being fired
 
     // Start is called before the first frame update
     void Start()
     {
         spawnedLaser = Instantiate(laserPrefab, firePoint.transform) as GameObject;
         spawnedLaser.SetActive(false);
-        countdown = 0.0f;
     }
 
     // Update is called once per frame
     void Update()
     {
-        countdown += Time.deltaTime;
-        if(countdown >= fireEverySeconds)
+
+    }
+
+    // Method that is going to be called from the procedural animation controller to shoot the laser
+    public void TryShootLaser()
+    {
+        keepShooting = true;
+        // Start laser courutine if it has not started yet
+        if (!isAttacking)
         {
-            // Decide randomly whether to shoot the laser or not if the laser is not already being shot
-            if(Random.Range(0.0f, 1.0f) > 0.5f && !isAttacking)
-            {
-                StartCoroutine(ShootLaser());
-            }
-            countdown = 0.0f;
+            StartCoroutine(ShootLaser());
         }
+    }
+
+    // Method that is going to be called from the procedural animation controller to stop shooting the laser
+    public void StopShootLaser()
+    {
+        keepShooting = false;
     }
 
     IEnumerator ShootLaser()
@@ -67,7 +74,7 @@ public class LaserAttack : MonoBehaviour
             lowerHead.position = Vector3.Lerp(lowerHead.position, lowerHeadEnd.position, timeElapsed);
             spawnedLaser.transform.position = firePoint.transform.position;
             yield return null;
-        } while (timeElapsed < fireInTime);
+        } while (keepShooting);
         spawnedLaser.SetActive(false);
         // Close head parts
         timeElapsed = 0.0f;

@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class ProceduralAnimationsController : MonoBehaviour
 {
@@ -23,6 +24,7 @@ public class ProceduralAnimationsController : MonoBehaviour
     Vector3 currentVelocity;                        // Current velocity
     float currentAngularVelocity;                   // Current angular velocity
     Vector3 fromVector;                             // The vector from which the angular difference is measured
+    [SerializeField] LaserAttack laser;             // Script for the laser attack
 
     enum Orientation
     {
@@ -134,13 +136,24 @@ public class ProceduralAnimationsController : MonoBehaviour
             if (distToTarget > maxDistToTarget)
             {
                 targetVelocity = moveSpeed * targetDirProjected.normalized;
+                laser.StopShootLaser();
             }
             // If too close reverse direction and move away
             else if (distToTarget < minDistToTarget)
             {
                 movingForward = false;
                 targetVelocity = moveSpeed * -targetDirProjected.normalized;
+                laser.StopShootLaser();
             }
+            // If between min and max distances, shoot laser
+            else
+            {
+                laser.TryShootLaser();
+            }
+        }
+        else
+        {
+            laser.StopShootLaser();
         }
 
         // Smooth velocity
