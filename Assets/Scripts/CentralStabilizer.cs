@@ -4,13 +4,13 @@ using UnityEngine;
 
 public class CentralStabilizer : MonoBehaviour
 {
-    [SerializeField] ProceduralAnimationsController mainController; // This componenet manages the main movement of the character
     [SerializeField] Transform mainBody;                            // Body which height needs to change
     [SerializeField] float standardHeight;                          // Standard heihgt of the central body (the one at the beginning)
     [SerializeField] float maxHeightDifference;                     // Maximum height difference from the standard height permited
     [SerializeField] float changeHeightInTime;                      // The time step that is going to take for the body to change its height
     private float currentHeight;                                    // Current height of the body
-    private bool changingHeight;
+    private bool changingHeight;                                    // Boolean to check if the body is already changing its height
+    private bool stairs;                                            // Boolean to check if the body is going through some stairs
 
     // Start is called before the first frame update
     void Start()
@@ -21,10 +21,19 @@ public class CentralStabilizer : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        // Being in the stairs will affect the main body
         RaycastHit hit;
         if (Physics.Raycast(transform.position, Vector3.down, out hit, 50.0f))
         {
             Debug.DrawRay(transform.position, Vector3.down * hit.distance, Color.red);
+            if(hit.transform.tag == "Stairs")
+            {
+                stairs = true;
+            }
+            else
+            {
+                stairs = false;
+            }
         }
     }
 
@@ -64,5 +73,10 @@ public class CentralStabilizer : MonoBehaviour
         } while (timeElapsed < changeHeightInTime);
 
         changingHeight = false;
+    }
+
+    public bool isOnStairs()
+    {
+        return stairs;
     }
 }

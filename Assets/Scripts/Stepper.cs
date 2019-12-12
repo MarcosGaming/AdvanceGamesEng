@@ -7,12 +7,15 @@ public class Stepper : MonoBehaviour
 
     [SerializeField] Transform target;                          // Transform that is going to raytrace downwoards to the position the foot need to be at
     [SerializeField] ProceduralAnimationsController mainBody;   // Get the velocity of the main body from here
+
     [SerializeField] float forwardStepAtDistance;               // Distance after which the leg is going to move going forwards
     [SerializeField] float forwardOverShootFraction;            // Fraction to overstep by so the legs do not get dragged behind the body
     [SerializeField] float forwardMultiplier;                   // Multiplier to speed up the leg movement going forwards
-    [SerializeField] float backwardStepAtDistance;             // Distance after which the leg is going to move when going backwards
+
+    [SerializeField] float backwardStepAtDistance;              // Distance after which the leg is going to move when going backwards
     [SerializeField] float backwardOverShootFraction;           // Fraction to overstep by so the legs do not get dragged behind the body when going backwards
     [SerializeField] float backwardMultiplier;                  // Multiplier to speed up the leg movement going backwards
+
     public bool Moving;                                         // Checks if the leg is already moving
     private bool isGrounded;                                    // Boolean to check if the feet is in the air or not 
 
@@ -43,15 +46,16 @@ public class Stepper : MonoBehaviour
         // If already moving not start another move
         if (Moving) return;
 
-        // Start courotine when distance to target is greater or equal than the step distance or if the feet is in the air or if it is inside another object
-        RaycastHit hitDown;
-        Physics.Raycast(target.position, Vector3.down, out hitDown, 50.0f);
-        RaycastHit hitUp;
-        if(!mainBody.movingForward && (Vector3.Distance(transform.position, hitDown.point) >= backwardStepAtDistance || !isGrounded))
+        // Raycast from the target downwards to get the new position to step to
+        RaycastHit hit;
+        Physics.Raycast(target.position, Vector3.down, out hit, 50.0f);
+
+        // Start courotine when distance to target is greater or equal than the step distance or if the feet is in the air
+        if (!mainBody.movingForward && (Vector3.Distance(transform.position, hit.point) >= backwardStepAtDistance || !isGrounded))
         {
             StartCoroutine(MoveLeg(backwardStepAtDistance, backwardOverShootFraction, backwardMultiplier));
         }
-        else if (Vector3.Distance(transform.position, hitDown.point) >= forwardStepAtDistance || !isGrounded || Physics.Raycast(transform.position, Vector3.up, out hitUp, 2.0f))
+        else if (Vector3.Distance(transform.position, hit.point) >= forwardStepAtDistance || !isGrounded)
         {
             StartCoroutine(MoveLeg(forwardStepAtDistance, forwardOverShootFraction, forwardMultiplier));
         }
@@ -87,7 +91,7 @@ public class Stepper : MonoBehaviour
         RaycastHit hit;
         if(Physics.Raycast(target.position,Vector3.down, out hit, 50.0f))
         {
-             Debug.DrawRay(target.position, Vector3.down * hit.distance, Color.red);
+            Debug.DrawRay(target.position, Vector3.down * hit.distance, Color.red);
             endPos = hit.point;
         }
         // Total distance to overshoot by

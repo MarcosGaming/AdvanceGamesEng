@@ -11,6 +11,7 @@ public class ProceduralAnimationsController : MonoBehaviour
     [SerializeField] float headMaxTurnAngle;        // Max angle the head can turn
     private Vector3 headStartDirection;             // Starting head direction
     private Quaternion headStartRotation;           // Starting head rotation
+
     [SerializeField] Stepper[] steppers;            // Legs
     [SerializeField] float turnSpeed;               // Turn speed
     public float moveSpeed;                         // Movement speed
@@ -20,11 +21,23 @@ public class ProceduralAnimationsController : MonoBehaviour
     [SerializeField] float minDistToTarget;         // Min range to target
     [SerializeField] float maxDistToTarget;         // Max range to target
     [SerializeField] float maxAngToTarget;          // Max angle to target
+    [SerializeField] float minAngToTarget;          // Min angle to target 
+
     [SerializeField] Orientation orientation;       // Right or Forward
+
     Vector3 currentVelocity;                        // Current velocity
     float currentAngularVelocity;                   // Current angular velocity
     Vector3 fromVector;                             // The vector from which the angular difference is measured
+
     [SerializeField] LaserAttack laser;             // Script for the laser attack
+
+    [SerializeField] CentralStabilizer stabilizer;  // Stabilizer that changes the height of the body when necessary
+
+    [SerializeField] float lookAheadBackwardsBy;    // The distance that the body is going to use to look ahead when going backwards
+
+    private NavMeshPath path;                       // Path that will mark the direction to follow
+
+    private Vector3 previousPosition;               // Position in the previous frame
 
     enum Orientation
     {
@@ -34,9 +47,18 @@ public class ProceduralAnimationsController : MonoBehaviour
 
     private void Awake()
     {
-        headStartDirection = target.position - headBone.position;
+        // Start direction of the head is going to be towards the front of the body
+        if(orientation.Equals(Orientation.Right))
+        {
+            headStartDirection = transform.right;
+        }
+        else
+        {
+            headStartDirection = transform.forward;
+        }
         headStartRotation = headBone.rotation;
         StartCoroutine(LegUpdateCoroutine());
+        path = new NavMeshPath();
     }
 
     // Start is called before the first frame update
@@ -54,7 +76,7 @@ public class ProceduralAnimationsController : MonoBehaviour
 
     private void LateUpdate()
     {
-       
+        previousPosition = transform.position;
     }
 
     // Coroutine for the leg movement
@@ -90,8 +112,16 @@ public class ProceduralAnimationsController : MonoBehaviour
     // Movement
     void RootMotionUpdate()
     {
+        // Calculate path towards target
+        NavMesh.CalculatePath(transform.position, target.position, NavMesh.AllAreas, path);
+        for (int i = 0; i < path.corners.Length - 1; i++)
+            Debug.DrawLine(path.corners[i], path.corners[i + 1], Color.red);
         // Get direction towards target
-        Vector3 targetDir = target.position - transform.position;
+        Vector3 targetDir = new Vector3();
+        if (path.corners.Length > 0)
+        {
+           targetDir = path.corners[1] - transform.position;
+        }
         // Vector toward target on the XZ plane
         Vector3 targetDirProjected = Vector3.ProjectOnPlane(targetDir, transform.up);
         // Angle from forward direction toward our target
@@ -127,10 +157,9 @@ public class ProceduralAnimationsController : MonoBehaviour
 
         Vector3 targetVelocity = Vector3.zero;
         // Dont move if not facing the target
-        if (Mathf.Abs(angToTarget) < 90)
+        if (Mathf.Abs(angToTarget) < minAngToTarget)
         {
             float distToTarget = Vector3.Distance(transform.position, target.position);
-            movingForward = true;
 
             // If too far away, approach the target
             if (distToTarget > maxDistToTarget)
@@ -141,11 +170,10 @@ public class ProceduralAnimationsController : MonoBehaviour
             // If too close reverse direction and move away
             else if (distToTarget < minDistToTarget)
             {
-                movingForward = false;
                 targetVelocity = moveSpeed * -targetDirProjected.normalized;
                 laser.StopShootLaser();
             }
-            // If between min and max distances, shoot laser
+            // If between min and max distances, try to shoot the laser
             else
             {
                 laser.TryShootLaser();
@@ -153,13 +181,35 @@ public class ProceduralAnimationsController : MonoBehaviour
         }
         else
         {
+            currentVelocity *= 0.5f;
             laser.StopShootLaser();
+        }
+        // When going up or down stairs reduce the velocity
+        if(stabilizer.isOnStairs())
+        {
+            targetVelocity *= 0.7f;
         }
 
         // Smooth velocity
         currentVelocity = Vector3.Lerp(currentVelocity, targetVelocity, 1 - Mathf.Exp(-moveAcceleration * Time.deltaTime));
 
+        // When going backwards check that the new position is reachable
+        if(!movingForward && !NavMesh.CalculatePath(transform.position, transform.position + (currentVelocity * Time.deltaTime * lookAheadBackwardsBy), NavMesh.AllAreas, path))
+        {
+            currentVelocity = Vector3.zero;
+        }
+
         // Apply velocity
         transform.position += currentVelocity * Time.deltaTime;
+
+        // Calculate whether moving forwards or backwards
+        if (Vector3.Dot(fromVector, (transform.position - previousPosition)) < 0.0f)
+        {
+            movingForward = false;
+        }
+        else
+        {
+            movingForward = true;
+        }
     }
 }

@@ -12,9 +12,9 @@ public class LaserAttack : MonoBehaviour
     [SerializeField] Transform lowerHeadEnd;        // Transform that indicates the end position of the lower head
     [SerializeField] float openInTime;              // Time step that is going to take for the head to open
     [SerializeField] float closeInTime;             // TIme step that is going to take for the head to close
+
     [SerializeField] GameObject laserPrefab;        // Laser game object
     [SerializeField] GameObject firePoint;          // Gameobject from where the laser is going to be shot
-    [SerializeField] float fireInTime;              // For how long the laser is going to be shot
 
     private GameObject spawnedLaser;                // Instance of the laser prefab
     private bool isAttacking;                       // Whether the laser is being shot or not
@@ -66,7 +66,7 @@ public class LaserAttack : MonoBehaviour
         // Shoot laser
         timeElapsed = 0.0f;
         spawnedLaser.SetActive(true);
-        do
+        while(keepShooting)
         {
             timeElapsed += Time.deltaTime;
             // Keep updating the upper head and lower head positon in case that the head needs to move
@@ -74,7 +74,7 @@ public class LaserAttack : MonoBehaviour
             lowerHead.position = Vector3.Lerp(lowerHead.position, lowerHeadEnd.position, timeElapsed);
             spawnedLaser.transform.position = firePoint.transform.position;
             yield return null;
-        } while (keepShooting);
+        }
         spawnedLaser.SetActive(false);
         // Close head parts
         timeElapsed = 0.0f;
