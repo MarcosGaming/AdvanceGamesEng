@@ -34,10 +34,6 @@ public class Stepper : MonoBehaviour
         {
             Debug.DrawRay(target.position, Vector3.down * hit.distance, Color.red);
         }
-        if (Physics.Raycast(transform.position, Vector3.up, out hit, 10.0f))
-        {
-            Debug.DrawRay(transform.position, Vector3.up * 50.0f, Color.blue);
-        }
     }
 
     // This function is called in the procedural animations controller
@@ -91,7 +87,6 @@ public class Stepper : MonoBehaviour
         RaycastHit hit;
         if(Physics.Raycast(target.position,Vector3.down, out hit, 50.0f))
         {
-            Debug.DrawRay(target.position, Vector3.down * hit.distance, Color.red);
             endPos = hit.point;
         }
         // Total distance to overshoot by

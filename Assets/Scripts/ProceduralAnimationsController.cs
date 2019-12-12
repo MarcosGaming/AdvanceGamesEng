@@ -47,15 +47,6 @@ public class ProceduralAnimationsController : MonoBehaviour
 
     private void Awake()
     {
-        // Start direction of the head is going to be towards the front of the body
-        if(orientation.Equals(Orientation.Right))
-        {
-            headStartDirection = transform.right;
-        }
-        else
-        {
-            headStartDirection = transform.forward;
-        }
         headStartRotation = headBone.rotation;
         StartCoroutine(LegUpdateCoroutine());
         path = new NavMeshPath();
